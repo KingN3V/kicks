@@ -30,6 +30,16 @@ class Product(Base):
         order_by="ProductImage.position",
     )
 
+    @property
+    def sold_out(self) -> bool:
+        # No variants at all also counts as sold out (nothing to buy)
+        return all(v.stock == 0 for v in self.variants)
+
+    @property
+    def cover_image(self) -> str | None:
+        # images are already ordered by position, so the first one is the cover
+        return self.images[0].url if self.images else None
+
 
 class Variant(Base):
     __tablename__ = "variants"
