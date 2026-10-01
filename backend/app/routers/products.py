@@ -10,7 +10,7 @@ from app.schemas import ProductDetail, ProductPage
 
 router = APIRouter(prefix="/products", tags=["products"])
 
-# Load related rows up front (see explanation below)
+# Load related rows up front 
 EAGER = (selectinload(Product.variants), selectinload(Product.images))
 
 
@@ -36,10 +36,8 @@ def list_products(
     if max_price is not None:
         stmt = stmt.where(Product.price <= max_price)
     if size:
-        # has this size AND it's in stock
-        stmt = stmt.where(
-            Product.variants.any((Variant.size == size))
-        )
+        # has this size at all (in stock or not)
+        stmt = stmt.where(Product.variants.any(Variant.size == size))
 
     total = db.scalar(select(func.count()).select_from(stmt.subquery()))
 
