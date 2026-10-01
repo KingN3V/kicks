@@ -34,7 +34,7 @@ class ProductDetail(ProductListItem):
     """Full shape for the product page (inherits the list fields)."""
     description: str | None
     images: list[ImageOut]
-    variants: list[VariantOut]
+    
 
 
 class ProductPage(BaseModel):
