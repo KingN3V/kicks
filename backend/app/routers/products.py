@@ -10,7 +10,7 @@ from app.schemas import ProductDetail, ProductPage
 
 router = APIRouter(prefix="/products", tags=["products"])
 
-# Load related rows up front 
+# Load related rows up front
 EAGER = (selectinload(Product.variants), selectinload(Product.images))
 
 
