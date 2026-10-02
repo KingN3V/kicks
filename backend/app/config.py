@@ -25,3 +25,10 @@ ADMIN_PASSWORD_HASH = _require("ADMIN_PASSWORD_HASH")
 CLOUDINARY_CLOUD_NAME = _require("CLOUDINARY_CLOUD_NAME")
 CLOUDINARY_API_KEY = _require("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = _require("CLOUDINARY_API_SECRET")
+
+# --- CORS: which frontend origins may call this API (comma-separated) ---
+CORS_ORIGINS = [
+    o.strip()
+    for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if o.strip()
+]
