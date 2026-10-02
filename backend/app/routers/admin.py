@@ -1,6 +1,8 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from pydantic import BaseModel, Field
+from app.images import upload_product_image
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -90,6 +92,90 @@ def set_stock(
         product.variants.append(Variant(size=size, stock=data.stock))
     else:
         variant.stock = data.stock
+
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+class UploadOut(BaseModel):
+    url: str
+    public_id: str
+
+
+@router.post("/uploads", response_model=UploadOut, status_code=status.HTTP_201_CREATED)
+def upload_image(file: Annotated[UploadFile, File()]):
+    """Upload one image to Cloudinary and get back its URL."""
+    return upload_product_image(file)
+
+
+
+class ImageAdd(BaseModel):
+    url: str = Field(min_length=1, max_length=500)
+
+
+class ImageOrder(BaseModel):
+    image_ids: list[int]
+
+
+@router.post(
+    "/products/{product_id}/images",
+    response_model=ProductDetail,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_image(
+    product_id: int,
+    data: ImageAdd,
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Attach an already-uploaded image URL to a product (goes to the end)."""
+    product = get_product_or_404(db, product_id)
+
+    next_position = max((i.position for i in product.images), default=-1) + 1
+    product.images.append(ProductImage(url=data.url, position=next_position))
+
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+@router.delete("/products/{product_id}/images/{image_id}", response_model=ProductDetail)
+def delete_image(
+    product_id: int,
+    image_id: int,
+    db: Annotated[Session, Depends(get_db)],
+):
+    product = get_product_or_404(db, product_id)
+
+    image = next((i for i in product.images if i.id == image_id), None)
+    if image is None:
+        raise HTTPException(status_code=404, detail="Image not found on this product")
+
+    product.images.remove(image)  # delete-orphan cascade deletes the row
+
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+@router.put("/products/{product_id}/images/order", response_model=ProductDetail)
+def reorder_images(
+    product_id: int,
+    data: ImageOrder,
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Send every image id in the order you want. The first one becomes the cover."""
+    product = get_product_or_404(db, product_id)
+
+    current = {i.id: i for i in product.images}
+    if sorted(data.image_ids) != sorted(current):
+        raise HTTPException(
+            status_code=422,
+            detail="image_ids must list every image of this product exactly once",
+        )
+
+    for position, image_id in enumerate(data.image_ids):
+        current[image_id].position = position
 
     db.commit()
     db.refresh(product)

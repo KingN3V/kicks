@@ -11,6 +11,7 @@ class VariantOut(BaseModel):
 class ImageOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    id: int      # new
     url: str
     position: int
 
