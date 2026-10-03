@@ -1,16 +1,19 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel, Field
 from app.images import upload_product_image
 from sqlalchemy.orm import Session
+from sqlalchemy import func, or_, select
+
 
 from app.database import get_db
 from app.models import Product, ProductImage, Variant
 from app.routers.auth import get_current_admin
-from app.schemas import ProductDetail
-from app.schemas_admin import ProductCreate, ProductUpdate, StockUpdate
+from app.schemas_admin import ProductCreate, ProductUpdate, StockUpdate, AdminProductDetail, AdminProductPage
 from app.slugs import unique_slug
+from app.routers.products import EAGER
+
 
 # The guard is on the router, so EVERY route added here is admin-only.
 # You can't forget it on a new endpoint.
@@ -22,7 +25,7 @@ router = APIRouter(
 
 
 @router.post(
-    "/products", response_model=ProductDetail, status_code=status.HTTP_201_CREATED
+    "/products", response_model=AdminProductDetail , status_code=status.HTTP_201_CREATED
 )
 def create_product(data: ProductCreate, db: Annotated[Session, Depends(get_db)]):
     sizes = [v.size for v in data.variants]
@@ -57,7 +60,7 @@ def get_product_or_404(db: Session, product_id: int) -> Product:
     return product
 
 
-@router.patch("/products/{product_id}", response_model=ProductDetail)
+@router.patch("/products/{product_id}", response_model=AdminProductDetail )
 def update_product(
     product_id: int,
     data: ProductUpdate,
@@ -77,7 +80,7 @@ def update_product(
     return product
 
 
-@router.put("/products/{product_id}/variants/{size}", response_model=ProductDetail)
+@router.put("/products/{product_id}/variants/{size}", response_model=AdminProductDetail )
 def set_stock(
     product_id: int,
     size: str,
@@ -120,7 +123,7 @@ class ImageOrder(BaseModel):
 
 @router.post(
     "/products/{product_id}/images",
-    response_model=ProductDetail,
+    response_model=AdminProductDetail ,
     status_code=status.HTTP_201_CREATED,
 )
 def add_image(
@@ -139,7 +142,7 @@ def add_image(
     return product
 
 
-@router.delete("/products/{product_id}/images/{image_id}", response_model=ProductDetail)
+@router.delete("/products/{product_id}/images/{image_id}", response_model=AdminProductDetail )
 def delete_image(
     product_id: int,
     image_id: int,
@@ -158,7 +161,7 @@ def delete_image(
     return product
 
 
-@router.put("/products/{product_id}/images/order", response_model=ProductDetail)
+@router.put("/products/{product_id}/images/order", response_model=AdminProductDetail )
 def reorder_images(
     product_id: int,
     data: ImageOrder,
@@ -180,3 +183,42 @@ def reorder_images(
     db.commit()
     db.refresh(product)
     return product
+
+
+@router.get("/products", response_model=AdminProductPage)
+def admin_list_products(
+    db: Annotated[Session, Depends(get_db)],
+    q: str | None = None,
+    is_visible: bool | None = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+):
+    """Every product, hidden ones included. Optional name/brand search."""
+    stmt = select(Product)
+
+    if q:
+        pattern = f"%{q}%"
+        stmt = stmt.where(
+            or_(Product.name.ilike(pattern), Product.brand.ilike(pattern))
+        )
+    if is_visible is not None:
+        stmt = stmt.where(Product.is_visible.is_(is_visible))
+
+    total = db.scalar(select(func.count()).select_from(stmt.subquery()))
+
+    stmt = (
+        stmt.options(*EAGER)
+        .order_by(Product.created_at.desc(), Product.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    items = db.scalars(stmt).all()
+
+    return AdminProductPage(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.get("/products/{product_id}", response_model=AdminProductDetail)
+def admin_get_product(
+    product_id: int, db: Annotated[Session, Depends(get_db)]
+):
+    return get_product_or_404(db, product_id)

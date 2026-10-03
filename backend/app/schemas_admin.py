@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from app.schemas import ProductDetail, ProductListItem
 
 
 class VariantIn(BaseModel):
@@ -34,3 +35,18 @@ class ProductUpdate(BaseModel):
 
 class StockUpdate(BaseModel):
     stock: int = Field(ge=0)
+
+
+class AdminProductListItem(ProductListItem):
+    is_visible: bool
+
+
+class AdminProductDetail(ProductDetail):
+    is_visible: bool
+
+
+class AdminProductPage(BaseModel):
+    items: list[AdminProductListItem]
+    total: int
+    page: int
+    page_size: int
