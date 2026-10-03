@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -12,6 +13,20 @@ router = APIRouter(prefix="/products", tags=["products"])
 
 # Load related rows up front
 EAGER = (selectinload(Product.variants), selectinload(Product.images))
+
+
+class FilterOptions(BaseModel):
+    brands: list[str]
+    categories: list[str]
+    sizes: list[str]
+
+
+def _size_key(size: str):
+    # Numeric sizes first, in numeric order ("9" < "10" < "42.5"); anything else after
+    try:
+        return (0, float(size), size)
+    except ValueError:
+        return (1, 0.0, size)
 
 
 @router.get("", response_model=ProductPage)
@@ -50,6 +65,40 @@ def list_products(
     items = db.scalars(stmt).all()
 
     return ProductPage(items=items, total=total, page=page, page_size=page_size)
+
+
+# MUST stay above "/{slug}", or "filters" would be read as a product slug.
+@router.get("/filters", response_model=FilterOptions)
+def get_filters(db: Annotated[Session, Depends(get_db)]):
+    """Distinct values for the catalog filter dropdowns (visible products only)."""
+    visible = Product.is_visible.is_(True)
+
+    brands = db.scalars(
+        select(Product.brand)
+        .where(visible, Product.brand.is_not(None), Product.brand != "")
+        .distinct()
+        .order_by(Product.brand)
+    ).all()
+
+    categories = db.scalars(
+        select(Product.category)
+        .where(visible, Product.category.is_not(None), Product.category != "")
+        .distinct()
+        .order_by(Product.category)
+    ).all()
+
+    sizes = db.scalars(
+        select(Variant.size)
+        .join(Product, Variant.product_id == Product.id)
+        .where(visible)
+        .distinct()
+    ).all()
+
+    return FilterOptions(
+        brands=list(brands),
+        categories=list(categories),
+        sizes=sorted(sizes, key=_size_key),
+    )
 
 
 @router.get("/{slug}", response_model=ProductDetail)
