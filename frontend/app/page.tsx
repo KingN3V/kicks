@@ -5,7 +5,7 @@ export default async function Home() {
   const { items, total } = await getProducts();
 
   return (
-    <main className="mx-auto max-w-5xl p-4">
+    <main className="mx-auto w-full max-w-5xl p-4">
       <header className="mb-4">
         <h1 className="text-2xl font-bold">Kicks JJ</h1>
         <p className="text-sm text-gray-500">{total} shoes</p>
