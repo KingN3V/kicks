@@ -1,6 +1,9 @@
 import Filters, { type CurrentFilters } from "@/components/Filters";
+import Pagination from "@/components/Pagination";
 import ProductCard from "@/components/ProductCard";
 import { getFilters, getProducts, type ProductQuery } from "@/lib/api";
+
+const PAGE_SIZE = 12; // shoes per page (the API allows up to 50)
 
 // In recent Next.js versions searchParams is a Promise, like params.
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -17,6 +20,12 @@ function toPrice(value: string | undefined): number | undefined {
   if (value === undefined) return undefined;
   const n = Number(value);
   return Number.isInteger(n) && n >= 0 ? n : undefined;
+}
+
+// Page must be a whole number >= 1. Anything else (missing, "abc", 0) means page 1.
+function toPage(value: string | undefined): number {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 1 ? n : 1;
 }
 
 export default async function Home({
@@ -42,11 +51,23 @@ export default async function Home({
     max_price: toPrice(current.max_price),
   };
 
+  let page = toPage(first(sp.page));
+
   // Both requests are independent, so run them at the same time
-  const [{ items, total }, options] = await Promise.all([
-    getProducts(query),
+  const [result, options] = await Promise.all([
+    getProducts({ ...query, page, page_size: PAGE_SIZE }),
     getFilters(),
   ]);
+
+  const total = result.total;
+  let items = result.items;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  // ?page=99 on a 3-page catalog: show the last page instead of an empty one
+  if (page > totalPages) {
+    page = totalPages;
+    items = (await getProducts({ ...query, page, page_size: PAGE_SIZE })).items;
+  }
 
   const hasFilters = Object.values(current).some((v) => !!v);
   const onlySize =
@@ -77,15 +98,18 @@ export default async function Home({
         </p>
       ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {items.map((product) => (
+          {items.map((product, index) => (
             <ProductCard
               key={product.id}
               product={product}
               selectedSize={current.size}
+              eager={index < 4}
             />
           ))}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} current={current} />
     </main>
   );
 }

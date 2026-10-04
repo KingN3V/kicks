@@ -13,9 +13,11 @@ type Props = {
   // Set when the size filter is active, so we can grey out shoes
   // that have the size but not in stock.
   selectedSize?: string;
+  // True for the first cards on the page (above the fold): load their photo now
+  eager?: boolean;
 };
 
-export default function ProductCard({ product, selectedSize }: Props) {
+export default function ProductCard({ product, selectedSize, eager = false }: Props) {
   const sizeOutOfStock =
     !!selectedSize &&
     product.variants.some((v) => v.size === selectedSize && v.stock === 0);
@@ -35,6 +37,7 @@ export default function ProductCard({ product, selectedSize }: Props) {
             alt={product.name}
             fill
             sizes="(min-width: 768px) 25vw, 50vw"
+            loading={eager ? "eager" : "lazy"}
             className={`object-cover ${unavailable ? "grayscale" : ""}`}
           />
         ) : (
