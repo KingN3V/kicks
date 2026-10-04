@@ -1,8 +1,9 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProduct } from "@/lib/api";
-import BuyButtons from "@/components/BuyButtons";
+import BuyPanel from "@/components/BuyPanel";
 
 // Same guard as ProductCard: next/image only loads hosts listed in next.config.ts.
 function isLoadable(url: string): boolean {
@@ -13,6 +14,49 @@ function isLoadable(url: string): boolean {
 function sizeKey(size: string): [number, number, string] {
   const n = parseFloat(size);
   return Number.isNaN(n) ? [1, 0, size] : [0, n, size];
+}
+
+const SITE_URL = process.env.SITE_URL ?? "";
+
+// Cloudinary resizes on the fly if you add a transformation after "/upload/".
+// Here: crop to 1200x630 (the shape link previews use), auto quality, JPEG.
+function ogImage(url: string): string {
+  return url.replace("/upload/", "/upload/c_fill,w_1200,h_630,q_auto,f_jpg/");
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProduct(slug);
+  if (product === null) return { title: "Shoe not found | Kicks JJ" };
+
+  const price = `KES ${product.price.toLocaleString("en-KE")}`;
+  const details = [product.brand, product.category].filter(Boolean).join(" · ");
+  const description = [price, details, product.sold_out ? "Sold out" : null]
+    .filter(Boolean)
+    .join(" · ");
+
+  // Same rule as the gallery: only Cloudinary photos
+  const cover = product.images.find((img) => isLoadable(img.url));
+  const title = `${product.name} | Kicks JJ`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      siteName: "Kicks JJ",
+      url: `${SITE_URL}/products/${product.slug}`,
+      images: cover
+        ? [{ url: ogImage(cover.url), width: 1200, height: 630, alt: product.name }]
+        : [],
+    },
+  };
 }
 
 export default async function ProductPage({
@@ -85,28 +129,17 @@ export default async function ProductPage({
             </p>
           )}
 
-          <h2 className="mb-2 mt-6 text-sm font-medium">Sizes</h2>
-          {sizes.length === 0 ? (
-            <p className="text-sm text-gray-500">No sizes listed.</p>
-          ) : (
-            <ul className="flex flex-wrap gap-2">
-              {sizes.map((v) => (
-                <li
-                  key={v.size}
-                  className={`min-w-12 rounded border px-3 py-2 text-center text-sm ${
-                    v.stock === 0 ? "text-gray-400 line-through opacity-60" : ""
-                  }`}
-                >
-                  {v.size}
-                </li>
-              ))}
-            </ul>
-          )}
-          <BuyButtons
+          {/* The size chips and buy buttons live in one client component.
+              The env vars are server-only, so we read them here and pass them down. */}
+          <BuyPanel
             name={product.name}
-            slug={product.slug}
+            pageUrl={`${SITE_URL}/products/${product.slug}`}
             soldOut={product.sold_out}
+            variants={sizes}
+            whatsapp={process.env.WHATSAPP_NUMBER}
+            instagram={process.env.INSTAGRAM_HANDLE}
           />
+
           {product.description && (
             <p className="mt-6 whitespace-pre-line text-sm text-gray-600">
               {product.description}
