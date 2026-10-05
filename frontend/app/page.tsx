@@ -1,6 +1,7 @@
 import Filters, { type CurrentFilters } from "@/components/Filters";
 import Pagination from "@/components/Pagination";
 import ProductCard from "@/components/ProductCard";
+import RequestShoe from "@/components/RequestShoe";
 import { getFilters, getProducts, type ProductQuery } from "@/lib/api";
 
 const PAGE_SIZE = 12; // shoes per page (the API allows up to 50)
@@ -110,6 +111,8 @@ export default async function Home({
       )}
 
       <Pagination page={page} totalPages={totalPages} current={current} />
+      
+      <RequestShoe current={current} />
     </main>
   );
 }
