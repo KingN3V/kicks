@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
+/* The site is always black: no light mode, no switching with the phone's theme */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #000000;
+  --foreground: #f4f4f2;
+  --surface: #121212; /* photo wells, panels */
+  --line: #262626; /* hairline borders */
+  --muted: #9a9a96; /* secondary text */
+  color-scheme: dark; /* dropdowns, inputs and scrollbars turn dark too */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-hanken), system-ui, sans-serif;
+  --font-display: var(--font-instrument), Georgia, serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* TEMPORARY BRIDGE: our components still use Tailwind's grays (bg-gray-100,
+   text-gray-500...) which were made for a white page. Remapping them to black-theme
+   values makes everything look right now. As we rewrite each component to use
+   surface/muted, this block can go. */
+@theme {
+  --color-gray-100: #121212;
+  --color-gray-400: #6f6f6b;
+  --color-gray-500: #9a9a96;
+  --color-gray-600: #b4b4b0;
+}
+
+/* Tailwind 4 draws borders in the text colour (white here). Make them subtle instead. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--line);
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Visible keyboard focus on a black page */
+:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+/* The open dropdown list is drawn by the browser; give it a dark background */
+select option {
+  background-color: #121212;
+  color: #f4f4f2;
 }
