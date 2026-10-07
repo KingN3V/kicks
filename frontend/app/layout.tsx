@@ -18,7 +18,7 @@ const instrument = Instrument_Serif({
 export const metadata: Metadata = {
   title: "Kicks JJ | Shoes delivered countrywide",
   description:
-    "Sneakers and shoes you can order by WhatsApp or Instagram. Delivery countrywide.",
+    "Shoes you can order by WhatsApp or Instagram. Delivery countrywide.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
