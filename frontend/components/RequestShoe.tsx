@@ -1,5 +1,6 @@
 import { FaInstagram, FaWhatsapp } from "react-icons/fa6";
 import type { CurrentFilters } from "@/components/Filters";
+import { instagramMessageUrl, whatsappUrl } from "@/lib/contact";
 
 // "9500" -> "9,500". If it isn't a number, show it as typed.
 function kes(value: string): string {
@@ -30,26 +31,29 @@ type Props = {
 };
 
 export default function RequestShoe({ current }: Props) {
-  const whatsapp = process.env.WHATSAPP_NUMBER;
-  const instagram = process.env.INSTAGRAM_HANDLE;
+  const whatsapp = whatsappUrl(buildMessage(current));
+  const instagram = instagramMessageUrl();
 
   // No contact details configured: nothing useful to show
   if (!whatsapp && !instagram) return null;
 
   return (
-    <section className="mt-10 rounded-lg border p-4 text-center">
-      <h2 className="font-medium">Can&apos;t find your shoe?</h2>
-      <p className="mt-1 text-sm text-gray-500">
-        Tell us what you&apos;re looking for and we&apos;ll try to get it for you.
+    <section className="mt-16 rounded-sm border px-4 py-10 text-center">
+      <h2 className="font-display text-3xl leading-tight md:text-4xl">
+        Can&apos;t find your shoe?
+      </h2>
+      <p className="mx-auto mt-2 max-w-sm text-muted">
+        Tell us what you&apos;re looking for and we&apos;ll try to get it for
+        you.
       </p>
 
-      <div className="mt-4 flex flex-col justify-center gap-3 sm:flex-row">
+      <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
         {whatsapp && (
           <a
-            href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(buildMessage(current))}`}
+            href={whatsapp}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-medium text-white"
+            className="inline-flex items-center justify-center gap-2 rounded-xs bg-white px-6 py-3.5 font-medium text-black hover:bg-white/85"
           >
             <FaWhatsapp className="h-5 w-5" aria-hidden="true" />
             Request on WhatsApp
@@ -57,10 +61,10 @@ export default function RequestShoe({ current }: Props) {
         )}
         {instagram && (
           <a
-            href={`https://ig.me/m/${instagram}`}
+            href={instagram}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 rounded-lg border px-4 py-3 font-medium"
+            className="inline-flex items-center justify-center gap-2 rounded-xs border border-white/40 px-6 py-3.5 font-medium hover:border-white"
           >
             <FaInstagram className="h-5 w-5" aria-hidden="true" />
             Message on Instagram
