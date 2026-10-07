@@ -4,6 +4,8 @@ import ProductCard from "@/components/ProductCard";
 import RequestShoe from "@/components/RequestShoe";
 import { getFilters, getProducts, type ProductQuery } from "@/lib/api";
 import Hero from "@/components/Hero";
+import HowItWorks from "@/components/HowItWorks";
+import ServiceRow from "@/components/ServiceRow";
 
 const PAGE_SIZE = 12; // shoes per page (the API allows up to 50)
 
@@ -86,10 +88,15 @@ export default async function Home({
 
   return (
     <main>
-      {showHero && <Hero featured={featured} />}
+      {showHero && (
+        <>
+          <Hero featured={featured} />
+          <ServiceRow />
+        </>
+      )}
 
       {/* id="shoes" is where "Browse shoes" and the header link scroll to */}
-      <div id="shoes" className="mx-auto w-full max-w-5xl scroll-mt-20 p-4">
+      <div id="shoes" className="mx-auto w-full max-w-5xl scroll-mt-20 p-4 pt-12">
         <div className="mb-4 flex items-baseline justify-between gap-4">
           <h2 className="font-display text-4xl leading-tight">Shoes</h2>
           <p className="text-sm text-muted">
@@ -121,7 +128,11 @@ export default async function Home({
         )}
 
         <Pagination page={page} totalPages={totalPages} current={current} />
+      </div>
 
+      <HowItWorks />
+
+      <div className="mx-auto w-full max-w-5xl px-4">
         <RequestShoe current={current} />
       </div>
     </main>
