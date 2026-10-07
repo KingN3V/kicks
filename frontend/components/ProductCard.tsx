@@ -24,13 +24,9 @@ export default function ProductCard({ product, selectedSize, eager = false }: Pr
   const unavailable = product.sold_out || sizeOutOfStock;
 
   return (
-    <Link
-      href={`/products/${product.slug}`}
-      className={`block overflow-hidden rounded-lg border ${
-        unavailable ? "opacity-60" : ""
-      }`}
-    >
-      <div className="relative aspect-square bg-gray-100">
+    // "group" lets the photo react when you hover anywhere on the card
+    <Link href={`/products/${product.slug}`} className="group block">
+      <div className="relative aspect-square overflow-hidden rounded-sm border border-transparent bg-surface transition-colors group-hover:border-white/40">
         {isLoadable(product.cover_image) ? (
           <Image
             src={product.cover_image}
@@ -38,29 +34,31 @@ export default function ProductCard({ product, selectedSize, eager = false }: Pr
             fill
             sizes="(min-width: 768px) 25vw, 50vw"
             loading={eager ? "eager" : "lazy"}
-            className={`object-cover ${unavailable ? "grayscale" : ""}`}
+            className={`object-cover transition-transform duration-300 motion-safe:group-hover:scale-[1.03] ${
+              unavailable ? "opacity-60 grayscale" : ""
+            }`}
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-sm text-gray-400">
+          <div className="flex h-full items-center justify-center text-sm text-muted">
             No photo
           </div>
         )}
 
         {unavailable && (
-          <span className="absolute left-2 top-2 rounded bg-black px-2 py-1 text-xs font-medium text-white">
+          <span className="absolute left-2 top-2 rounded-xs bg-white px-2 py-1 text-xs font-semibold text-black">
             {product.sold_out ? "Sold out" : `Size ${selectedSize} sold out`}
           </span>
         )}
       </div>
 
-      <div className="p-3">
-        {product.brand && (
-          <p className="text-xs uppercase tracking-wide text-gray-500">
-            {product.brand}
-          </p>
-        )}
-        <p className="font-medium">{product.name}</p>
-        <p className="text-sm">KES {product.price.toLocaleString("en-KE")}</p>
+      <div className="px-0.5 pt-3">
+        {product.brand && <p className="text-sm text-muted">{product.brand}</p>}
+        <p className={`font-medium ${unavailable ? "text-muted" : ""}`}>
+          {product.name}
+        </p>
+        <p className={`text-sm ${unavailable ? "text-muted" : ""}`}>
+          KES {product.price.toLocaleString("en-KE")}
+        </p>
       </div>
     </Link>
   );
