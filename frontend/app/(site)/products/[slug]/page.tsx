@@ -78,34 +78,44 @@ export default async function ProductPage({
   const images = product.images.filter((img) => isLoadable(img.url));
 
   return (
-    <main className="mx-auto w-full max-w-5xl p-4">
-      <Link href="/" className="mb-4 inline-block text-sm text-gray-500">
+    <main className="mx-auto w-full max-w-5xl px-4 pb-8 pt-6">
+      <Link
+        href="/#shoes"
+        className="mb-6 inline-block text-sm text-muted hover:text-foreground"
+      >
         ← All shoes
       </Link>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Gallery: swipe sideways on a phone, no JavaScript needed */}
+      <div className="grid gap-8 md:grid-cols-2 md:gap-12">
+        {/* Gallery: swipe sideways on a phone, no JavaScript needed.
+            With several photos, each is a little narrower than the screen,
+            so the edge of the next one peeks out and hints at swiping. */}
         <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto">
           {images.length > 0 ? (
             images.map((img, i) => (
               <div
                 key={img.id}
-                className="relative aspect-square w-full shrink-0 snap-center overflow-hidden rounded-lg bg-gray-100"
+                className="relative aspect-square w-full shrink-0 snap-center overflow-hidden rounded-sm bg-surface"
               >
                 <Image
                   src={img.url}
                   alt={`${product.name} photo ${i + 1}`}
                   fill
-                  sizes="(min-width: 768px) 50vw, 100vw"
+                  sizes="(min-width: 768px) 44vw, 100vw"
                   loading={i === 0 ? "eager" : "lazy"}
                   className={`object-cover ${
-                    product.sold_out ? "grayscale" : ""
+                    product.sold_out ? "opacity-70 grayscale" : ""
                   }`}
                 />
+                {images.length > 1 && (
+                  <span className="absolute bottom-3 right-3 rounded-xs bg-black/70 px-2 py-1 text-xs">
+                    {i + 1} / {images.length}
+                  </span>
+                )}
               </div>
             ))
           ) : (
-            <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+            <div className="flex aspect-square w-full items-center justify-center rounded-sm bg-surface text-muted">
               No photo
             </div>
           )}
@@ -113,18 +123,20 @@ export default async function ProductPage({
 
         <div>
           {product.brand && (
-            <p className="text-xs uppercase tracking-wide text-gray-500">
+            <p className="text-sm text-muted">
               {product.brand}
               {product.category ? ` · ${product.category}` : ""}
             </p>
           )}
-          <h1 className="text-2xl font-bold">{product.name}</h1>
-          <p className="mt-1 text-xl">
+          <h1 className="mt-1 font-display text-4xl leading-tight md:text-5xl">
+            {product.name}
+          </h1>
+          <p className="mt-2 text-xl">
             KES {product.price.toLocaleString("en-KE")}
           </p>
 
           {product.sold_out && (
-            <p className="mt-2 inline-block rounded bg-black px-2 py-1 text-xs font-medium text-white">
+            <p className="mt-3 inline-block rounded-xs bg-white px-2 py-1 text-xs font-semibold text-black">
               Sold out
             </p>
           )}
@@ -141,7 +153,7 @@ export default async function ProductPage({
           />
 
           {product.description && (
-            <p className="mt-6 whitespace-pre-line text-sm text-gray-600">
+            <p className="mt-8 whitespace-pre-line text-foreground/75">
               {product.description}
             </p>
           )}
