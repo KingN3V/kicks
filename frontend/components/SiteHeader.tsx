@@ -1,7 +1,8 @@
 import Link from "next/link";
+import MobileMenu from "@/components/MobileMenu";
 import { whatsappUrl } from "@/lib/contact";
 
-// These point at sections of the home page (we add their ids when we rebuild it)
+// These point at sections of the home page and the footer
 const links = [
   { href: "/#shoes", label: "Shoes" },
   { href: "/#how", label: "How to order" },
@@ -18,7 +19,7 @@ export default function SiteHeader() {
           Kicks JJ
         </Link>
 
-        {/* On a phone the links are hidden; the WhatsApp button stays */}
+        {/* Wide screens: the links sit in the header */}
         <nav aria-label="Main" className="hidden gap-7 text-sm text-muted md:flex">
           {links.map((link) => (
             <Link
@@ -31,16 +32,20 @@ export default function SiteHeader() {
           ))}
         </nav>
 
-        {whatsapp && (
-          <a
-            href={whatsapp}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-xs border border-white/40 px-4 py-2.5 text-sm font-medium hover:border-white"
-          >
-            Order on WhatsApp
-          </a>
-        )}
+        <div className="flex items-center gap-2">
+          {whatsapp && (
+            <a
+              href={whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xs border border-white/40 px-3 py-2 text-sm font-medium hover:border-white md:px-4 md:py-2.5"
+            >
+              Order on WhatsApp
+            </a>
+          )}
+          {/* Phones: the three lines open a panel with the same links */}
+          <MobileMenu links={links} />
+        </div>
       </div>
     </header>
   );
