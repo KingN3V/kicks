@@ -58,3 +58,8 @@ select option {
   background-color: #121212;
   color: #f4f4f2;
 }
+/* Nothing on the page should ever pan sideways. "clip" (unlike "hidden") keeps
+   the sticky header working and doesn't affect the gallery's own swiping. */
+   body {
+    overflow-x: clip;
+  }
