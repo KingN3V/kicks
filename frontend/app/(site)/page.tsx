@@ -3,6 +3,7 @@ import Pagination from "@/components/Pagination";
 import ProductCard from "@/components/ProductCard";
 import RequestShoe from "@/components/RequestShoe";
 import { getFilters, getProducts, type ProductQuery } from "@/lib/api";
+import Hero from "@/components/Hero";
 
 const PAGE_SIZE = 12; // shoes per page (the API allows up to 50)
 
@@ -78,41 +79,51 @@ export default async function Home({
     !current.min_price &&
     !current.max_price;
 
+  // The hero only shows on the plain home page (no filters, first page).
+  // It features the newest shoe that is in stock and has a photo.
+  const showHero = !hasFilters && page === 1;
+  const featured = items.find((p) => !p.sold_out && p.cover_image);
+
   return (
-    <main className="mx-auto w-full max-w-5xl p-4">
-      <header className="mb-4">
-        <h1 className="text-2xl font-bold">Kicks JJ</h1>
-        <p className="text-sm text-gray-500">
-          {total} {total === 1 ? "shoe" : "shoes"}
-        </p>
-      </header>
+    <main>
+      {showHero && <Hero featured={featured} />}
 
-      <Filters options={options} current={current} />
-
-      {items.length === 0 ? (
-        <p className="py-12 text-center text-gray-500">
-          {!hasFilters
-            ? "No shoes yet."
-            : onlySize
-              ? `We don't have anything in size ${current.size} right now.`
-              : "No shoes match these filters."}
-        </p>
-      ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {items.map((product, index) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              selectedSize={current.size}
-              eager={index < 4}
-            />
-          ))}
+      {/* id="shoes" is where "Browse shoes" and the header link scroll to */}
+      <div id="shoes" className="mx-auto w-full max-w-5xl scroll-mt-20 p-4">
+        <div className="mb-4 flex items-baseline justify-between gap-4">
+          <h2 className="font-display text-4xl leading-tight">Shoes</h2>
+          <p className="text-sm text-muted">
+            {total} {total === 1 ? "shoe" : "shoes"}
+          </p>
         </div>
-      )}
 
-      <Pagination page={page} totalPages={totalPages} current={current} />
-      
-      <RequestShoe current={current} />
+        <Filters options={options} current={current} />
+
+        {items.length === 0 ? (
+          <p className="py-12 text-center text-gray-500">
+            {!hasFilters
+              ? "No shoes yet."
+              : onlySize
+                ? `We don't have anything in size ${current.size} right now.`
+                : "No shoes match these filters."}
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {items.map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                selectedSize={current.size}
+                eager={index < 4}
+              />
+            ))}
+          </div>
+        )}
+
+        <Pagination page={page} totalPages={totalPages} current={current} />
+
+        <RequestShoe current={current} />
+      </div>
     </main>
   );
 }
