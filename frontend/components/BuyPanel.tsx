@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FaInstagram, FaWhatsapp } from "react-icons/fa6";
+import { FaInstagram, FaTruck, FaWhatsapp } from "react-icons/fa6";
 import type { Variant } from "@/lib/api";
 
 type Props = {
@@ -32,7 +32,7 @@ export default function BuyPanel({
     <div>
       <h2 className="mb-2 mt-6 text-sm font-medium">Sizes</h2>
       {variants.length === 0 ? (
-        <p className="text-sm text-gray-500">No sizes listed.</p>
+        <p className="text-sm text-muted">No sizes listed.</p>
       ) : (
         <ul className="flex flex-wrap gap-2">
           {variants.map((v) => {
@@ -46,11 +46,13 @@ export default function BuyPanel({
                   aria-pressed={selected}
                   // tapping the chosen size again un-selects it
                   onClick={() => setSize(selected ? null : v.size)}
-                  className={`min-w-12 rounded border px-3 py-2 text-center text-sm ${
+                  className={`min-w-12 rounded-xs border px-3 py-2 text-center text-sm transition-colors ${
                     outOfStock
-                      ? "cursor-not-allowed text-gray-400 line-through opacity-60"
-                      : ""
-                  } ${selected ? "font-semibold ring-2 ring-current" : ""}`}
+                      ? "cursor-not-allowed text-muted line-through opacity-50"
+                      : selected
+                        ? "border-white bg-white font-semibold text-black"
+                        : "border-white/40 hover:border-white"
+                  }`}
                 >
                   {v.size}
                 </button>
@@ -61,7 +63,7 @@ export default function BuyPanel({
       )}
 
       {!soldOut && !size && variants.length > 0 && (
-        <p className="mt-2 text-xs text-gray-500">
+        <p className="mt-2 text-xs text-muted">
           Tap a size to include it in your message.
         </p>
       )}
@@ -72,7 +74,7 @@ export default function BuyPanel({
             href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-medium text-white"
+            className="flex items-center justify-center gap-2 rounded-xs bg-white px-6 py-3.5 font-medium text-black hover:bg-white/85"
           >
             <FaWhatsapp className="h-5 w-5" aria-hidden="true" />
             {soldOut ? "Ask about this on WhatsApp" : "Buy on WhatsApp"}
@@ -83,13 +85,19 @@ export default function BuyPanel({
             href={`https://ig.me/m/${instagram}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 rounded-lg border px-4 py-3 font-medium"
+            className="flex items-center justify-center gap-2 rounded-xs border border-white/40 px-6 py-3.5 font-medium hover:border-white"
           >
             <FaInstagram className="h-5 w-5" aria-hidden="true" />
             Message on Instagram
           </a>
         )}
       </div>
+
+      <p className="mt-4 flex items-start gap-2 text-sm text-muted">
+        <FaTruck className="mt-0.5 shrink-0" aria-hidden="true" />
+        We deliver countrywide. Tell us where you are and we&apos;ll bring it
+        to you.
+      </p>
     </div>
   );
 }
