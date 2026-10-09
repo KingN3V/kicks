@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.models import Product, Variant
-from app.schemas import ProductDetail, ProductPage
+from app.schemas import ProductDetail, ProductListItem, ProductPage
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -99,6 +99,19 @@ def get_filters(db: Annotated[Session, Depends(get_db)]):
         categories=list(categories),
         sizes=sorted(sizes, key=_size_key),
     )
+
+
+# MUST also stay above "/{slug}", or "featured" would be read as a product slug.
+@router.get("/featured", response_model=ProductListItem | None)
+def get_featured(db: Annotated[Session, Depends(get_db)]):
+    """The shoe the admin picked for the home page hero, or null if none."""
+    stmt = (
+        select(Product)
+        .where(Product.is_visible.is_(True), Product.is_featured.is_(True))
+        .options(*EAGER)
+        .order_by(Product.created_at.desc(), Product.id.desc())
+    )
+    return db.scalars(stmt).first()
 
 
 @router.get("/{slug}", response_model=ProductDetail)
