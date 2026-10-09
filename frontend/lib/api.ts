@@ -53,13 +53,49 @@ export type Variant = {
   
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   
+    // Render's free backend sleeps when idle and takes up to a minute to wake.
+  // These control how long we keep trying before giving up.
+  const RETRY_STATUSES = new Set([502, 503, 504]); // "bad gateway / starting up"
+  const RETRY_DELAY_MS = 3000; // pause between attempts
+  const ATTEMPT_TIMEOUT_MS = 10000; // one attempt never hangs longer than this
+  const MAX_WAIT_MS = 25000; // stay under the hosting time limit
+
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
   async function apiFetch(path: string): Promise<Response> {
     if (!API_URL) {
       throw new Error("NEXT_PUBLIC_API_URL is not set. Check .env.local");
     }
-    // no-store: always ask the API, so stock changes show up immediately.
-    // We can add caching later once everything works.
-    return fetch(`${API_URL}${path}`, { cache: "no-store" });
+
+    const started = Date.now();
+    let lastResponse: Response | null = null;
+    let lastError: unknown = null;
+
+    while (true) {
+      const remaining = MAX_WAIT_MS - (Date.now() - started);
+      try {
+        // no-store: always ask the API, so stock changes show up immediately.
+        const res = await fetch(`${API_URL}${path}`, {
+          cache: "no-store",
+          signal: AbortSignal.timeout(Math.min(ATTEMPT_TIMEOUT_MS, remaining)),
+        });
+        // Anything except "starting up" is a real answer (including 404): return it
+        if (!RETRY_STATUSES.has(res.status)) return res;
+        lastResponse = res;
+        lastError = null;
+      } catch (err) {
+        // Network failure or our own timeout: the API may still be waking up
+        lastError = err;
+        lastResponse = null;
+      }
+
+      // Out of time? Give up with whatever we last saw
+      if (Date.now() - started + RETRY_DELAY_MS >= MAX_WAIT_MS) break;
+      await sleep(RETRY_DELAY_MS);
+    }
+
+    if (lastResponse) return lastResponse; // callers turn this into their usual error
+    throw lastError instanceof Error ? lastError : new Error("API unreachable");
   }
   
   export async function getProducts(query: ProductQuery = {}): Promise<ProductPage> {
