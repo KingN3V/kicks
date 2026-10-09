@@ -31,6 +31,7 @@ class ProductUpdate(BaseModel):
     description: str | None = None
     price: int | None = Field(default=None, gt=0)
     is_visible: bool | None = None
+    is_featured: bool | None = None
 
 
 class StockUpdate(BaseModel):
@@ -39,10 +40,12 @@ class StockUpdate(BaseModel):
 
 class AdminProductListItem(ProductListItem):
     is_visible: bool
+    is_featured: bool
 
 
 class AdminProductDetail(ProductDetail):
     is_visible: bool
+    is_featured: bool
 
 
 class AdminProductPage(BaseModel):
