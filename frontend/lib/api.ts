@@ -123,3 +123,16 @@ export type Variant = {
     if (!res.ok) throw new Error(`Failed to load product (${res.status})`);
     return res.json();
   }
+  // The shoe the admin picked for the hero, or null. Never throws: the hero
+// is a nice extra, so if this request fails (API asleep, old backend without
+// the route, odd response) the home page just uses its normal fallback.
+  export async function getFeatured(): Promise<ProductListItem | null> {
+    try {
+      const res = await apiFetch("/products/featured");
+      if (!res.ok) return null;
+      const data: ProductListItem | null = await res.json();
+      return data;
+    } catch {
+      return null;
+    }
+  }

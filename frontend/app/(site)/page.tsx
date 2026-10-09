@@ -2,7 +2,7 @@ import Filters, { type CurrentFilters } from "@/components/Filters";
 import Pagination from "@/components/Pagination";
 import ProductCard from "@/components/ProductCard";
 import RequestShoe from "@/components/RequestShoe";
-import { getFilters, getProducts, type ProductQuery } from "@/lib/api";
+import { getFeatured, getFilters, getProducts, type ProductQuery } from "@/lib/api";
 import Hero from "@/components/Hero";
 import HowItWorks from "@/components/HowItWorks";
 import ServiceRow from "@/components/ServiceRow";
@@ -55,12 +55,19 @@ export default async function Home({
     max_price: toPrice(current.max_price),
   };
 
+  const hasFilters = Object.values(current).some((v) => !!v);
+
   let page = toPage(first(sp.page));
 
-  // Both requests are independent, so run them at the same time
-  const [result, options] = await Promise.all([
+  // The hero only shows on the plain home page (no filters, first page),
+  // so we only ask for the featured shoe there.
+  const showHero = !hasFilters && page === 1;
+
+  // The requests are independent, so run them at the same time
+  const [result, options, picked] = await Promise.all([
     getProducts({ ...query, page, page_size: PAGE_SIZE }),
     getFilters(),
+    showHero ? getFeatured() : Promise.resolve(null),
   ]);
 
   const total = result.total;
@@ -73,7 +80,6 @@ export default async function Home({
     items = (await getProducts({ ...query, page, page_size: PAGE_SIZE })).items;
   }
 
-  const hasFilters = Object.values(current).some((v) => !!v);
   const onlySize =
     !!current.size &&
     !current.brand &&
@@ -81,11 +87,12 @@ export default async function Home({
     !current.min_price &&
     !current.max_price;
 
-  // The hero only shows on the plain home page (no filters, first page).
-  // It features the newest shoe that is in stock and has a photo.
-  const showHero = !hasFilters && page === 1;
-  const featured = items.find((p) => !p.sold_out && p.cover_image);
-
+  // The hero shoe: the one the admin picked, if it can be shown (in stock and
+  // with a photo). Otherwise the newest in-stock shoe with a photo, as before.
+  const featured =
+    picked && !picked.sold_out && picked.cover_image
+      ? picked
+      : items.find((p) => !p.sold_out && p.cover_image);
   return (
     <main>
       {showHero && (
