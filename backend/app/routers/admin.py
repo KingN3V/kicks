@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, 
 from pydantic import BaseModel, Field
 from app.images import upload_product_image
 from sqlalchemy.orm import Session
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, update
 
 
 from app.database import get_db
@@ -50,7 +50,7 @@ def create_product(data: ProductCreate, db: Annotated[Session, Depends(get_db)])
 
 
 # Fields that are NOT NULL in the database: a client may omit them, but not null them
-NOT_NULLABLE = {"name", "price", "is_visible"}
+NOT_NULLABLE = {"name", "price", "is_visible", "is_featured"}
 
 
 def get_product_or_404(db: Session, product_id: int) -> Product:
@@ -74,6 +74,16 @@ def update_product(
         if value is None and field in NOT_NULLABLE:
             raise HTTPException(status_code=422, detail=f"{field} cannot be null")
         setattr(product, field, value)
+    
+    # Only one shoe can be featured: if this one was just featured, un-feature
+    # every other shoe. Same transaction as the change above, so it all
+    # succeeds or none of it does.
+    if changes.get("is_featured") is True:
+        db.execute(
+            update(Product)
+            .where(Product.id != product.id, Product.is_featured.is_(True))
+            .values(is_featured=False)
+        )
 
     db.commit()
     db.refresh(product)
