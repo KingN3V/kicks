@@ -5,8 +5,14 @@ import type { ProductDetail, ProductListItem } from "@/lib/api";
 
 // --- Types: mirror backend/app/schemas_admin.py ---
 
-export type AdminProductListItem = ProductListItem & { is_visible: boolean };
-export type AdminProductDetail = ProductDetail & { is_visible: boolean };
+export type AdminProductListItem = ProductListItem & {
+  is_visible: boolean;
+  is_featured: boolean;
+};
+export type AdminProductDetail = ProductDetail & {
+  is_visible: boolean;
+  is_featured: boolean;
+};
 
 export type AdminProductPage = {
   items: AdminProductListItem[];

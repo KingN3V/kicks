@@ -119,6 +119,7 @@ function EditProduct({ product, onChange }: SectionProps) {
       </div>
 
       <VisibilityToggle product={product} onChange={onChange} />
+      <FeaturedToggle product={product} onChange={onChange} />
       <PhotosSection product={product} onChange={onChange} />
       <DetailsForm product={product} onChange={onChange} />
       <StockSection product={product} onChange={onChange} />
@@ -169,6 +170,74 @@ function VisibilityToggle({ product, onChange }: SectionProps) {
         className={smallButton}
       >
         {saving ? "Saving…" : product.is_visible ? "Hide" : "Show"}
+      </button>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Featured on the home page: saves the moment you tap it
+// ---------------------------------------------------------------------------
+
+function FeaturedToggle({ product, onChange }: SectionProps) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function toggle() {
+    setSaving(true);
+    setError(null);
+    try {
+      // The backend un-features every other shoe when this one is featured
+      const updated = await adminFetch<AdminProductDetail>(
+        `/admin/products/${product.id}`,
+        { method: "PATCH", json: { is_featured: !product.is_featured } },
+      );
+      onChange(updated);
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // The home page only shows a featured shoe it can sell: visible, in stock, with a photo
+  let note: string | null = null;
+  if (product.is_featured) {
+    if (!product.is_visible) {
+      note = "This shoe is hidden, so the home page shows another shoe until you make it visible.";
+    } else if (product.sold_out) {
+      note = "This shoe is sold out, so the home page shows another shoe until it is back in stock.";
+    } else if (product.images.length === 0) {
+      note = "This shoe has no photo yet, so the home page shows another shoe until you add one.";
+    } else {
+      note = "Its first photo is the one shown. Use the arrows in Photos to change it.";
+    }
+  } else {
+    note = "Featuring this shoe replaces the one currently on the home page.";
+  }
+
+  return (
+    <section className="flex items-center justify-between gap-3 rounded-lg border p-3">
+      <div>
+        <p className="font-medium">
+          {product.is_featured
+            ? "Featured on the home page"
+            : "Not featured on the home page"}
+        </p>
+        <p className="text-sm text-gray-500">{note}</p>
+        {error && (
+          <p role="alert" className="text-sm text-red-500">
+            {error}
+          </p>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={saving}
+        className={`${smallButton} shrink-0`}
+      >
+        {saving ? "Saving…" : product.is_featured ? "Remove" : "Feature"}
       </button>
     </section>
   );
