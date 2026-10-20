@@ -6,9 +6,9 @@ A mobile-first catalog website for a small Kenyan shoe business that sells mainl
 **API:** https://kicksjj-api.onrender.com (`/docs` for the interactive API reference)
 
 <p align="center">
-  <img src="docs/home.png" alt="Home page" width="230">
-  <img src="docs/product.png" alt="Product page" width="230">
-  <img src="docs/admin.png" alt="Admin edit screen" width="230">
+  <img src="docs/home.jpeg" alt="Home page" width="230">
+  <img src="docs/product.jpeg" alt="Product page" width="230">
+  <img src="docs/admin.jpeg" alt="Admin edit screen" width="230">
 </p>
 ## Why it works this way
 
