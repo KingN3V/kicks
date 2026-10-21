@@ -10,6 +10,7 @@ A mobile-first catalog website for a small Kenyan shoe business that sells mainl
   <img src="docs/product.jpeg" alt="Product page" width="230">
   <img src="docs/admin.jpeg" alt="Admin edit screen" width="230">
 </p>
+
 ## Why it works this way
 
 The business takes orders by message, so there is no cart or online payment. The site's job is to show what is in stock, make the right message one tap away, and be easy for a non-technical owner to keep up to date.
@@ -104,7 +105,7 @@ CLOUDINARY_API_SECRET=...
 CORS_ORIGINS=http://localhost:3000
 ```
 
-Use the same driver prefix as your installed PostgreSQL driver (the example assumes psycopg).
+Use the same driver prefix as your installed PostgreSQL driver (the example assumes psycopg2).
 
 Generate the admin password hash:
 
